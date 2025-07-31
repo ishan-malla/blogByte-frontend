@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Domine:wght@400..700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Libre+Franklin:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto+Slab:wght@100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -116,5 +117,31 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@theme {
+  --font-noto: "Noto Sans", sans-serif;
+  --font-libre: "Libre Franklin", sans-serif;
+  --font-slab: "Roboto Slab", serif;
+  --font-domine: "Domine", serif;
+  --font-baskerville: "Libre Baskerville", serif;
+}
+
+@layer utilities {
+  .font-noto {
+    font-family: var(--font-noto);
+  }
+  .font-libre {
+    font-family: var(--font-libre);
+  }
+  .font-slab {
+    font-family: var(--font-slab);
+  }
+  .font-domine {
+    font-family: var(--font-domine);
+  }
+  .font-baskerville {
+    font-family: var(--font-baskerville);
   }
 }

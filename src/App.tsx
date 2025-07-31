@@ -1,11 +1,13 @@
-import { Button } from "@/components/ui/button";
+import { Outlet } from "react-router-dom";
+import Navbar from "./components/navbar";
 
-function App() {
+export default function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
+    <div>
+      <Navbar></Navbar>
+      <main className="p-4">
+        <Outlet />
+      </main>
     </div>
   );
 }
-
-export default App;
