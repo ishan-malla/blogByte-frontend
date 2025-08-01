@@ -1,11 +1,11 @@
-import SpotlightCard from "@/components/ui/SpotlightCard";
+import PopularSection from "@/sections/PopularSection";
+import RecentSection from "@/sections/RecentSection";
 
 const Landing = () => {
   return (
-    <div className="w-full flex  md:pt-2 md:justify-center">
-      <main className="w-full max-w-2/3 gird justify-center ">
-        <SpotlightCard></SpotlightCard>
-      </main>
+    <div className="flex flex-col items-center gap-8">
+      <RecentSection></RecentSection>
+      <PopularSection></PopularSection>
     </div>
   );
 };

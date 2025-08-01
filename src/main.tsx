@@ -8,6 +8,8 @@ import { Provider } from "react-redux";
 import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import Home from "./pages/Home.tsx";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -22,6 +24,10 @@ const router = createBrowserRouter([
       {
         path: "/register",
         element: <Register></Register>,
+      },
+      {
+        path: "/home",
+        element: <Home></Home>,
       },
     ],
   },

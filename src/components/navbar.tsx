@@ -12,15 +12,19 @@ const Navbar = () => {
           </h1>
         </div>
         <div className="flex gap-2 mt-2 md:mt-0">
-          <Link to="/home">
-            <Button className="border-0 w-16">Home</Button>
-          </Link>
-          <Link to="/login">
-            <Button className="border-0 w-16">Login</Button>
-          </Link>
-          <Link to="/register">
-            <Button className="border-0 w-16">Register</Button>
-          </Link>
+          {["/home", "/login", "/register"].map((path, idx) => {
+            const labels = ["Home", "Login", "Register"];
+            return (
+              <Link
+                key={path}
+                to={path}
+                className="relative group w-16 text-center"
+              >
+                <Button className="border-0 w-full">{labels[idx]}</Button>
+                <span className="absolute left-2 -bottom-0 h-0.5 bg-white w-0 transition-all duration-300 group-hover:w-[80%]"></span>
+              </Link>
+            );
+          })}
           <Button>
             <Search size={38} color="#ffffff" absoluteStrokeWidth />
           </Button>
