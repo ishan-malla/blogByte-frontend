@@ -20,7 +20,9 @@ const Navbar = () => {
                 to={path}
                 className="relative group w-16 text-center"
               >
-                <Button className="border-0 w-full">{labels[idx]}</Button>
+                <Button className="border-0 w-full cursor-pointer ">
+                  {labels[idx]}
+                </Button>
                 <span className="absolute left-2 -bottom-0 h-0.5 bg-white w-0 transition-all duration-300 group-hover:w-[80%]"></span>
               </Link>
             );

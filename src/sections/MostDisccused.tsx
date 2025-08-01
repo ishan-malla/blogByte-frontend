@@ -36,15 +36,15 @@ const blogData = [
   },
 ];
 
-const PopularSection = () => {
+const MostDisccused = () => {
   return (
     <>
       <h2 className="text-start w-2/3 text-xl font-bold font-slab">
-        Popular Blogs
+        Most Disccused
       </h2>
       <div className="flex gap-4 flex-col lg:flex-row">
         <SpotlightCard></SpotlightCard>
-        <div className="w-full flex flex-col gap-4 border-x ">
+        <div className="w-full flex flex-col gap-4 border-x">
           {blogData.map((item) => (
             <BlogTab
               key={item.id}
@@ -56,8 +56,7 @@ const PopularSection = () => {
           ))}
         </div>
       </div>
-      <hr className="mt-8 w-[78%] mx-auto" />
     </>
   );
 };
-export default PopularSection;
+export default MostDisccused;
