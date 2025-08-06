@@ -9,6 +9,9 @@ import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
 import Home from "./pages/Home.tsx";
+import BlogPost from "./pages/BlogPost.tsx";
+import AdminDashboard from "./pages/Dashboard.tsx";
+import AdminRoute from "./components/AdminRoute.tsx";
 
 const router = createBrowserRouter([
   {
@@ -29,9 +32,42 @@ const router = createBrowserRouter([
         path: "/home",
         element: <Home></Home>,
       },
+      {
+        path: "/post",
+        element: <BlogPost></BlogPost>,
+      },
+      // Protected admin routes
+      {
+        path: "/admin/dashboard",
+        element: (
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        ),
+      },
+      // You can add more admin routes here
+      {
+        path: "/admin/users",
+        element: (
+          <AdminRoute>
+            {/* Add your admin users component here */}
+            <div>Admin Users Management</div>
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "/admin/posts",
+        element: (
+          <AdminRoute>
+            {/* Add your admin posts component here */}
+            <div>Admin Posts Management</div>
+          </AdminRoute>
+        ),
+      },
     ],
   },
 ]);
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
