@@ -1,8 +1,8 @@
-import LoginC from "@/components/ui/login";
+import LoginForm from "@/components/ui/login";
 const Login = () => {
   return (
-    <div className="w-full h-full">
-      <LoginC></LoginC>
+    <div className="w-screen mt-10 flex justify-center items-center ">
+      <LoginForm></LoginForm>
     </div>
   );
 };
