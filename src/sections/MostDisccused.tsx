@@ -1,5 +1,6 @@
-import BlogTab from "@/components/ui/BlogTab";
-import SpotlightCard from "@/components/ui/SpotlightCard";
+// import BlogTab from "@/components/ui/BlogTab";
+// import SpotlightCard from "@/components/ui/SpotlightCard";
+import PopularBlogTab from "@/components/ui/PopularBlogTab";
 
 const blogData = [
   {
@@ -40,13 +41,13 @@ const MostDisccused = () => {
   return (
     <>
       <h2 className="text-start w-2/3 text-xl font-bold font-slab">
-        Most Disccused
+        Most Discussed Blogs
       </h2>
       <div className="flex gap-4 flex-col lg:flex-row">
-        <SpotlightCard></SpotlightCard>
-        <div className="w-full flex flex-col gap-4 border-x">
+        {/* <SpotlightCard></SpotlightCard> */}
+        <div className="w-full flex flex-col gap-15 border-x sm:gap-4 items-center">
           {blogData.map((item) => (
-            <BlogTab
+            <PopularBlogTab
               key={item.id}
               title={item.title}
               img={item.img}
@@ -56,6 +57,7 @@ const MostDisccused = () => {
           ))}
         </div>
       </div>
+      <hr className="mt-8 w-[78%] mx-auto" />
     </>
   );
 };
