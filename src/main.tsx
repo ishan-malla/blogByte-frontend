@@ -12,6 +12,7 @@ import Home from "./pages/Home.tsx";
 import BlogPost from "./pages/BlogPost.tsx";
 import AdminDashboard from "./pages/Dashboard.tsx";
 import AdminRoute from "./components/AdminRoute.tsx";
+import Logout from "./components/Logout.tsx";
 
 const router = createBrowserRouter([
   {
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
             <div>Admin Posts Management</div>
           </AdminRoute>
         ),
+      },
+      {
+        path: "/logout",
+        element: <Logout />,
       },
     ],
   },

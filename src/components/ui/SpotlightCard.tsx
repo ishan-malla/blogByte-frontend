@@ -1,40 +1,44 @@
-import { MessageSquare } from "lucide-react";
-import { Star } from "lucide-react";
+import { MessageSquare, Star } from "lucide-react";
 
-const SpotlightCard = () => {
+type SpotlightCardProps = {
+  title: string;
+  img: string;
+  rating: number;
+  comments: number;
+};
+
+const SpotlightCard = ({
+  title,
+  img,
+  rating,
+  comments,
+}: SpotlightCardProps) => {
   return (
-    <div className="lg:min-w-135  w-100 flex flex-col gap-3">
-      <img
-        src="https://tickernews.co/wp-content/uploads/2023/01/tin-cook.jpeg"
-        alt="tim"
-        className="w-full h-auto object-cover"
-      />
-      <h2 className="text-lg font-domine font-semibold ">
-        Tim Cook to raise his salary and fire lots of employees and eat food
-        with that money.
-      </h2>
-      <p className="text-xs text-gray-700 font-baskerville ">
-        Tim is planning to drink beer and tacos with the money he saved but the
-        employees he fired have been eating salad to save money.{" "}
-      </p>
-      <div className="flex w-full items-center justify-end text-xs space-x-4 px-8">
-        <div className="flex space-x-1">
-          <Star
-            size={14}
-            color="#1e2939"
-            absoluteStrokeWidth
-            strokeWidth={1.3}
-          />
-          <span>4.5</span>
-        </div>
-        <div className="flex space-x-1">
-          <MessageSquare
-            size={14}
-            color="#1e2939"
-            absoluteStrokeWidth
-            strokeWidth={1.25}
-          />
-          <span>4</span>
+    <div className="w-full border rounded-md shadow-sm overflow-hidden flex flex-col gap-3">
+      <img src={img} alt={title} className="w-full h-52 object-cover" />
+      <div className="px-4 pb-4 space-y-2">
+        <h2 className="text-lg font-domine font-semibold line-clamp-2">
+          {title}
+        </h2>
+        <div className="flex justify-end text-xs space-x-4">
+          <div className="flex items-center space-x-1">
+            <Star
+              size={14}
+              color="#1e2939"
+              absoluteStrokeWidth
+              strokeWidth={1.3}
+            />
+            <span>{rating}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <MessageSquare
+              size={14}
+              color="#1e2939"
+              absoluteStrokeWidth
+              strokeWidth={1.25}
+            />
+            <span>{comments}</span>
+          </div>
         </div>
       </div>
     </div>

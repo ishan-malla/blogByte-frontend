@@ -1,4 +1,4 @@
-// LoginForm.tsx
+// RegisterForm.tsx
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,31 +19,43 @@ import { Input } from "@/components/ui/input";
 
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { useLoginMutation } from "../../features/auth/authApi";
+import { useRegisterMutation } from "../../features/auth/authApi";
 import { setCredentials } from "../../features/auth/authSlice";
 
-const formSchema = z.object({
-  username: z.string().min(3, {
-    message: "Username must be at least 3 characters.",
-  }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
-});
+const formSchema = z
+  .object({
+    username: z.string().min(3, {
+      message: "Username must be at least 3 characters.",
+    }),
+    email: z.string().email({
+      message: "Please enter a valid email address.",
+    }),
+    password: z.string().min(6, {
+      message: "Password must be at least 6 characters.",
+    }),
+    confirmPassword: z.string().min(6, {
+      message: "Confirm password must be at least 6 characters.",
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   // RTK Query mutation hook
-  const [login, { isLoading, error }] = useLoginMutation();
+  const [register, { isLoading, error }] = useRegisterMutation();
 
   // Error state for display
-  const [loginError, setLoginError] = useState<string>("");
+  const [registerError, setRegisterError] = useState<string>("");
 
-  // Password visibility state
+  // Password visibility states
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -57,22 +69,26 @@ export default function LoginForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setLoginError("");
+      setRegisterError("");
       console.log("Form data:", values);
 
-      // Call the login mutation - transform data if needed
-      const loginData = {
-        email: values.username, // If your API expects email instead of username
+      // Call the register mutation - exclude confirmPassword from API call
+      const registerData = {
+        username: values.username,
+        email: values.email,
         password: values.password,
+        role: "user", // Default role for registration
       };
 
-      const result = await login(loginData).unwrap();
+      const result = await register(registerData).unwrap();
 
       // Dispatch the credentials to Redux store
       dispatch(setCredentials(result));
@@ -85,27 +101,29 @@ export default function LoginForm() {
       const isAdmin = user && (user.role === "admin" || user.isAdmin === true);
       navigate(isAdmin ? "/admin/dashboard" : "/home");
     } catch (err: any) {
-      console.error("Login failed:", err);
+      console.error("Registration failed:", err);
 
       // Handle different error types
       if (err?.data?.message) {
-        setLoginError(err.data.message);
+        setRegisterError(err.data.message);
       } else if (err?.message) {
-        setLoginError(err.message);
+        setRegisterError(err.message);
       } else {
-        setLoginError("Login failed. Please try again.");
+        setRegisterError("Registration failed. Please try again.");
       }
     }
   };
 
   return (
     <div className="border mt-10 md:w-[30%] w-[90%] rounded-md font-slab p-6">
-      <h1 className="text-3xl font-bold font-slab text-center mb-6">Login</h1>
+      <h1 className="text-3xl font-bold font-slab text-center mb-6">
+        Register
+      </h1>
 
-      {/* Display login error if exists */}
-      {loginError ? (
+      {/* Display register error if exists */}
+      {registerError ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {loginError}
+          {registerError}
         </div>
       ) : error && "data" in error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -136,6 +154,27 @@ export default function LoginForm() {
             )}
           />
 
+          {/* Email */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    autoComplete="email"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Password */}
           <FormField
             control={form.control}
@@ -148,7 +187,7 @@ export default function LoginForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      autoComplete="current-password"
+                      autoComplete="new-password"
                       {...field}
                       disabled={isLoading}
                     />
@@ -170,25 +209,61 @@ export default function LoginForm() {
             )}
           />
 
+          {/* Confirm Password */}
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      autoComplete="new-password"
+                      {...field}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <Button
             type="submit"
             className="w-full cursor-pointer"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "Creating Account..." : "Register"}
           </Button>
         </form>
       </Form>
 
-      {/* Register link */}
+      {/* Login link */}
       <div className="text-center mt-4">
         <p className="text-sm text-gray-600">
-          Don't have an account?{" "}
+          Already have an account?{" "}
           <button
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/login")}
             className="text-blue-600 hover:underline font-medium"
           >
-            Register here
+            Login here
           </button>
         </p>
       </div>
