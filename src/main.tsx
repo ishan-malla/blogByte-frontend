@@ -12,14 +12,14 @@ import Home from "./pages/Home.tsx";
 import BlogPost from "./pages/BlogPost.tsx";
 import AdminDashboard from "./pages/Dashboard.tsx";
 import AdminRoute from "./components/AdminRoute.tsx";
-import Logout from "./components/Logout.tsx";
+// import Logout from "./components/Logout.tsx";
 import { persistor } from "./store/store";
 import { PersistGate } from "redux-persist/integration/react";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App></App>,
+    element: <App />,
     children: [
       { index: true, element: <Landing /> },
       { path: "about", element: <App /> },
@@ -48,10 +48,10 @@ const router = createBrowserRouter([
           </AdminRoute>
         ),
       },
-      {
-        path: "/logout",
-        element: <Logout />,
-      },
+      // {
+      //   path: "/logout",
+      //   element: <Logout />,
+      // },
     ],
   },
 ]);

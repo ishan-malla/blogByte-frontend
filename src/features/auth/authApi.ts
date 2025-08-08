@@ -2,7 +2,8 @@
 import { apiSlice } from "../api/apiSlice";
 
 interface LoginRequest {
-  email: string;
+  username: string;
+  email?: string;
   password: string;
 }
 

@@ -22,8 +22,8 @@ const HeadLines = () => {
       </div>
       {headlines.map((headline, index) => {
         return (
-          <div className="flex flex-col w-full ">
-            <Headline key={index} headline={headline}></Headline>
+          <div className="flex flex-col w-full  " key={index}>
+            <Headline headline={headline}></Headline>
           </div>
         );
       })}

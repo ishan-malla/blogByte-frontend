@@ -1,13 +1,23 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Button } from "./ui/button";
-import { useAppSelector } from "../hooks/redux";
+import { useAppSelector, useAppDispatch } from "../hooks/redux";
+import { useCallback } from "react";
+import { logout } from "../features/auth/authSlice";
 
 const Navbar = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   // Check if user is admin
   const isAdmin = user?.role === "admin" || user?.isAdmin === true;
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("token");
+    dispatch(logout());
+    navigate("/");
+  }, [dispatch, navigate]);
 
   return (
     <>
@@ -61,10 +71,15 @@ const Navbar = () => {
 
           {/* Logout button if authenticated */}
           {isAuthenticated && (
-            <Link to="/logout" className="relative group w-16 text-center">
-              <Button className="border-0 w-full cursor-pointer">Logout</Button>
+            <div className="relative group w-16 text-center">
+              <Button
+                onClick={handleLogout}
+                className="border-0 w-full cursor-pointer"
+              >
+                Logout
+              </Button>
               <span className="absolute left-2 -bottom-0 h-0.5 bg-white w-0 transition-all duration-300 group-hover:w-[80%]"></span>
-            </Link>
+            </div>
           )}
 
           <Button>
@@ -73,9 +88,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      <div className="hidden md:block w-full h-6 bg-[#2B2B2B]">
-        {/* Add your desktop content here */}
-      </div>
+      <div className="hidden md:block w-full h-6 bg-[#2B2B2B]"></div>
     </>
   );
 };
