@@ -2,14 +2,15 @@
 import { apiSlice } from "../api/apiSlice";
 
 interface LoginRequest {
-  username: string;
-  email?: string;
+  email: string;
   password: string;
 }
 
 interface LoginResponse {
   token: string;
   user: {
+    isAdmin: boolean;
+    role: string;
     id: string;
     name: string;
     email: string;

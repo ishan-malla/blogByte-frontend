@@ -22,7 +22,7 @@ import { setCredentials } from "../../features/auth/authSlice";
 
 const formSchema = z
   .object({
-    username: z.string().min(3, {
+    name: z.string().min(3, {
       message: "Username must be at least 3 characters.",
     }),
     email: z.string().email({
@@ -62,7 +62,7 @@ export default function RegisterForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -75,7 +75,7 @@ export default function RegisterForm() {
       console.log("Form data:", values);
 
       const registerData = {
-        username: values.username,
+        name: values.name,
         email: values.email,
         password: values.password,
         role: "user",
@@ -127,7 +127,7 @@ export default function RegisterForm() {
           {/* Username */}
           <FormField
             control={form.control}
-            name="username"
+            name="name"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Username</FormLabel>
@@ -135,7 +135,7 @@ export default function RegisterForm() {
                   <Input
                     type="text"
                     placeholder="Enter your username"
-                    autoComplete="username"
+                    autoComplete="name"
                     {...field}
                     disabled={isLoading}
                   />

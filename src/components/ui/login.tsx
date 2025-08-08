@@ -68,9 +68,12 @@ export default function LoginForm() {
       // Call the login mutation
       const result = await login(values).unwrap();
 
-      // Dispatch the credentials to Redux store
-      dispatch(setCredentials(result));
-
+      dispatch(
+        setCredentials({
+          user: result.user,
+          token: result.accessToken, // Renamed to match `authSlice`
+        })
+      );
       // Reset form
       form.reset();
 

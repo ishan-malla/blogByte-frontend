@@ -12,6 +12,8 @@ const Navbar = () => {
 
   // Check if user is admin
   const isAdmin = user?.role === "admin" || user?.isAdmin === true;
+  console.log("User:", user);
+  console.log("isAdmin:", isAdmin);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("token");
