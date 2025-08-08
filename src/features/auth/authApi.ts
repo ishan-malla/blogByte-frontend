@@ -39,25 +39,9 @@ const authApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Auth"],
     }),
-    logout: builder.mutation<void, void>({
-      query: () => ({
-        url: "/auth/logout",
-        method: "POST",
-      }),
-      invalidatesTags: ["Auth", "Post", "User"],
-    }),
-    getCurrentUser: builder.query<LoginResponse["user"], void>({
-      query: () => "/auth/me",
-      providesTags: ["Auth"],
-    }),
   }),
 });
 
-export const {
-  useLoginMutation,
-  useRegisterMutation,
-  useLogoutMutation,
-  useGetCurrentUserQuery,
-} = authApi;
+export const { useLoginMutation, useRegisterMutation } = authApi;
 
 export default authApi;

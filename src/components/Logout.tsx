@@ -1,30 +1,28 @@
+// src/components/Logout.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogoutMutation } from "../features/auth/authApi";
 import { useAppDispatch } from "../hooks/redux";
-import { setCredentials } from "../features/auth/authSlice";
+import { logout } from "../features/auth/authSlice"; // Import the logout action
 
 const Logout = () => {
-  const [logout] = useLogoutMutation();
+  const [logoutApi] = useLogoutMutation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const doLogout = async () => {
+    const performLogout = async () => {
       try {
-        await logout().unwrap();
-      } catch (error) {
-        // Handle logout error if needed
-        console.error("Logout error:", error);
+        await logoutApi().unwrap();
+      } finally {
+        // Always clear the auth state and redirect
+        dispatch(logout()); // Use the logout action
+        navigate("/login");
       }
-
-      // Clear credentials regardless of logout API success/failure
-      dispatch(setCredentials(null));
-      navigate("/login");
     };
 
-    doLogout();
-  }, [logout, dispatch, navigate]);
+    performLogout();
+  }, [logoutApi, dispatch, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

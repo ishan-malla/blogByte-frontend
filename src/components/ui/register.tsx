@@ -16,8 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-// Redux imports
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { useRegisterMutation } from "../../features/auth/authApi";
 import { setCredentials } from "../../features/auth/authSlice";
@@ -47,17 +45,13 @@ export default function RegisterForm() {
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // RTK Query mutation hook
   const [register, { isLoading, error }] = useRegisterMutation();
 
-  // Error state for display
   const [registerError, setRegisterError] = useState<string>("");
 
-  // Password visibility states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/home");
@@ -80,25 +74,22 @@ export default function RegisterForm() {
       setRegisterError("");
       console.log("Form data:", values);
 
-      // Call the register mutation - exclude confirmPassword from API call
       const registerData = {
         username: values.username,
         email: values.email,
         password: values.password,
-        role: "user", // Default role for registration
+        role: "user",
       };
 
       const result = await register(registerData).unwrap();
 
-      // Dispatch the credentials to Redux store
       dispatch(setCredentials(result));
 
       // Reset form
       form.reset();
 
-      // Navigate based on user role - with safe property access
       const user = result?.user;
-      const isAdmin = user && (user.role === "admin" || user.isAdmin === true);
+      const isAdmin = user && (user?.role === "admin" || user.isAdmin === true);
       navigate(isAdmin ? "/admin/dashboard" : "/home");
     } catch (err: any) {
       console.error("Registration failed:", err);

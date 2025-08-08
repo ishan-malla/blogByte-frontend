@@ -1,10 +1,9 @@
-// LoginForm.tsx
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react"; // Import eye icons (you can use any icon library)
 
 import { Button } from "@/components/ui/button";
 import {
@@ -66,13 +65,8 @@ export default function LoginForm() {
       setLoginError("");
       console.log("Form data:", values);
 
-      // Call the login mutation - transform data if needed
-      const loginData = {
-        email: values.username, // If your API expects email instead of username
-        password: values.password,
-      };
-
-      const result = await login(loginData).unwrap();
+      // Call the login mutation
+      const result = await login(values).unwrap();
 
       // Dispatch the credentials to Redux store
       dispatch(setCredentials(result));
@@ -80,9 +74,9 @@ export default function LoginForm() {
       // Reset form
       form.reset();
 
-      // Navigate based on user role - with safe property access
-      const user = result?.user;
-      const isAdmin = user && (user.role === "admin" || user.isAdmin === true);
+      // Navigate based on user role
+      const isAdmin =
+        result.user.role === "admin" || result.user.isAdmin === true;
       navigate(isAdmin ? "/admin/dashboard" : "/home");
     } catch (err: any) {
       console.error("Login failed:", err);
@@ -103,19 +97,22 @@ export default function LoginForm() {
       <h1 className="text-3xl font-bold font-slab text-center mb-6">Login</h1>
 
       {/* Display login error if exists */}
-      {loginError ? (
+      {loginError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {loginError}
         </div>
-      ) : error && "data" in error ? (
+      )}
+
+      {/* Display API error if exists */}
+      {error && "data" in error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {(error.data as any)?.message || "An error occurred"}
         </div>
-      ) : null}
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Username */}
+          {/* Email */}
           <FormField
             control={form.control}
             name="username"
@@ -126,7 +123,6 @@ export default function LoginForm() {
                   <Input
                     type="text"
                     placeholder="Enter your username"
-                    autoComplete="username"
                     {...field}
                     disabled={isLoading}
                   />
@@ -148,7 +144,6 @@ export default function LoginForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      autoComplete="current-password"
                       {...field}
                       disabled={isLoading}
                     />
@@ -158,9 +153,9 @@ export default function LoginForm() {
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
                         <Eye className="h-5 w-5" />
+                      ) : (
+                        <EyeOff className="h-5 w-5" />
                       )}
                     </button>
                   </div>
