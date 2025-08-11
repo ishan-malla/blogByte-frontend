@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import {
   Card,
@@ -9,17 +9,16 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
-import { Input } from "../components/ui/input";
+import { Plus, Image as ImageIcon } from "lucide-react";
 import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
+import Dropzone from "react-dropzone";
 
 interface PostFormData {
   title: string;
   content: string;
-  image: string;
+  image: File | null;
   snippet: string;
 }
 
@@ -31,10 +30,11 @@ const user = {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [posts, setPosts] = useState<PostFormData[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingPostTitle, setEditingPostTitle] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [preview, setPreview] = useState<string>("");
 
   const {
     control,
@@ -46,7 +46,7 @@ export default function DashboardPage() {
     defaultValues: {
       title: "",
       content: "",
-      image: "",
+      image: null,
       snippet: "",
     },
   });
@@ -56,48 +56,57 @@ export default function DashboardPage() {
       navigate("/");
       return;
     }
-
-    // Load saved posts from localStorage (demo)
-    const savedPosts = localStorage.getItem("posts");
-    if (savedPosts) setPosts(JSON.parse(savedPosts));
   }, [navigate]);
 
-  // Redirect if not admin (demo)
   if (!user || user.role !== "admin") {
     return null;
   }
 
-  const onSubmit = (data: PostFormData) => {
-    if (editingPostTitle) {
-      // Update post
-      setPosts((prev) => {
-        const updated = prev.map((post) =>
-          post.title === editingPostTitle ? { ...post, ...data } : post
-        );
-        localStorage.setItem("posts", JSON.stringify(updated));
-        return updated;
-      });
-      setMessage("Post updated successfully!");
-    } else {
-      // Create new post
-      const newPost = {
-        ...data,
-        id: Date.now().toString(),
-        author: user.name,
-        authorId: user.id,
-        publishedDate: new Date().toISOString().split("T")[0],
-        averageRating: 0,
-        totalRatings: 0,
+  const resizeImage = (file: File, maxWidth = 600): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        if (!e.target?.result) return;
+        img.src = e.target.result as string;
       };
-      setPosts((prev) => {
-        const updated = [newPost, ...prev];
-        localStorage.setItem("posts", JSON.stringify(updated));
-        return updated;
-      });
-      setMessage("Post created successfully!");
-    }
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas not supported"));
+
+        const scale = maxWidth / img.width;
+        const newWidth = maxWidth;
+        const newHeight = img.height * scale;
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error("Image compression failed"));
+          resolve(new File([blob], file.name, { type: file.type }));
+        }, file.type);
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const onSubmit = (data: PostFormData) => {
+    console.log("Ready to send:", data);
+
+    setMessage(
+      editingPostTitle
+        ? "Post updated (pending upload)"
+        : "Post created (pending upload)"
+    );
 
     reset();
+    setPreview("");
     setIsCreating(false);
     setEditingPostTitle(null);
   };
@@ -107,32 +116,31 @@ export default function DashboardPage() {
     setIsCreating(true);
     setValue("title", post.title);
     setValue("content", post.content);
-    setValue("image", post.image || "");
     setValue("snippet", post.snippet || "");
-  };
-
-  const handleDelete = (postTitle: string) => {
-    if (window.confirm("Are you sure you want to delete this post?")) {
-      setPosts((prev) => {
-        const updated = prev.filter((post) => post.title !== postTitle);
-        localStorage.setItem("posts", JSON.stringify(updated));
-        return updated;
-      });
-      setMessage("Post deleted successfully!");
-    }
+    setPreview(post.imagePreview || "");
   };
 
   const cancelForm = () => {
     setIsCreating(false);
     setEditingPostTitle(null);
     reset();
+    setPreview("");
+  };
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      const resizedFile = await resizeImage(file);
+      setValue("image", resizedFile);
+      setPreview(URL.createObjectURL(resizedFile));
+    } catch (err) {
+      console.error("Error resizing image:", err);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Header */}
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -155,7 +163,6 @@ export default function DashboardPage() {
             </Alert>
           )}
 
-          {/* Create/Edit Form */}
           {isCreating && (
             <Card>
               <CardHeader>
@@ -171,67 +178,69 @@ export default function DashboardPage() {
 
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="space-y-2">
+                  <div>
                     <Label htmlFor="title">Title</Label>
                     <Controller
                       name="title"
                       control={control}
                       render={({ field }) => (
-                        <Input
+                        <input
                           {...field}
-                          id="title"
-                          placeholder="Enter post title"
+                          className="border rounded px-3 py-2 w-full"
                           required
                         />
                       )}
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div>
                     <Label htmlFor="content">Content</Label>
                     <Controller
                       name="content"
                       control={control}
                       render={({ field }) => (
-                        <Textarea
-                          {...field}
-                          id="content"
-                          placeholder="Write your post content here..."
-                          required
-                          rows={6}
-                        />
+                        <Textarea {...field} rows={6} required />
                       )}
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Image URL</Label>
-                    <Controller
-                      name="image"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="image"
-                          placeholder="https://example.com/image.jpg (optional)"
-                        />
+                  <div>
+                    <Label>Upload Image</Label>
+                    <Dropzone
+                      onDrop={(acceptedFiles) => {
+                        if (acceptedFiles[0]) {
+                          handleImageUpload(acceptedFiles[0]);
+                        }
+                      }}
+                      accept={{ "image/*": [] }}
+                      maxFiles={1}
+                    >
+                      {({ getRootProps, getInputProps }) => (
+                        <div
+                          {...getRootProps()}
+                          className="border-2 border-dashed p-4 text-center cursor-pointer"
+                        >
+                          <input {...getInputProps()} />
+                          <ImageIcon className="mx-auto mb-2" />
+                          <p>Drag & drop or click to upload image</p>
+                        </div>
                       )}
-                    />
+                    </Dropzone>
+                    {preview && (
+                      <img
+                        src={preview}
+                        alt="Preview"
+                        className="mt-4 max-h-48 object-cover rounded"
+                      />
+                    )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div>
                     <Label htmlFor="snippet">Snippet</Label>
                     <Controller
                       name="snippet"
                       control={control}
-                      render={({ field }) => (
-                        <Textarea
-                          {...field}
-                          id="snippet"
-                          placeholder="Short description for the post preview (optional)"
-                          rows={3}
-                        />
-                      )}
+                      render={({ field }) => <Textarea {...field} rows={3} />}
                     />
                   </div>
 
@@ -251,76 +260,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           )}
-
-          {/* Posts List */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">
-              Your Posts ({posts.length})
-            </h2>
-
-            {posts.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500">
-                    No posts yet. Create your first post!
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {posts.map((post: any) => (
-                  <Card key={post.title}>
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 space-y-2">
-                          <h3 className="text-lg font-semibold">
-                            {post.title}
-                          </h3>
-                          <p className="text-gray-600 text-sm line-clamp-2">
-                            {post.snippet}
-                          </p>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>
-                              Published:{" "}
-                              {new Date(
-                                post.publishedDate
-                              ).toLocaleDateString()}
-                            </span>
-                            <Badge variant="outline">
-                              {post.averageRating?.toFixed(1) ?? 0} ★ (
-                              {post.totalRatings ?? 0})
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Link to={`/posts/${post.title}`}>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(post)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(post.title)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </main>
     </div>

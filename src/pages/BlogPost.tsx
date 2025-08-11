@@ -1,3 +1,4 @@
+import CommentSection from "@/components/CommentSection";
 const BlogPost = () => {
   const rating = 4; // Out of 5
 
@@ -119,6 +120,7 @@ const BlogPost = () => {
           a fork in hand.
         </p>
       </section>
+      <CommentSection></CommentSection>
     </article>
   );
 };

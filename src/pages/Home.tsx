@@ -47,7 +47,7 @@ const blogData = [
 
 export default function Home() {
   return (
-    <div className="w-full min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="w-full min-h-screen bg-gray-100 flex  justify-center">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6 sm:w-3/4 ">
         {blogData.map((blog) => (
           <div key={blog.id} className="aspect-square">
