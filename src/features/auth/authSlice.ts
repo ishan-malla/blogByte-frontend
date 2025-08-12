@@ -1,4 +1,3 @@
-// src/features/auth/authSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
@@ -6,8 +5,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role?: string; // Added role field for admin detection
-  isAdmin?: boolean; // Alternative admin flag
+  role?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthState {
@@ -31,9 +30,14 @@ const authSlice = createSlice({
       action: PayloadAction<{ user: User; token: string }>
     ) => {
       const { user, token } = action.payload;
-      state.user = user;
+
+      state.user = {
+        ...user,
+        isAdmin: user.role === "admin" || user.isAdmin === true,
+      };
       state.token = token;
       state.isAuthenticated = true;
+      console.log("User set in authSlice:", state.user);
     },
     logout: (state) => {
       state.user = null;

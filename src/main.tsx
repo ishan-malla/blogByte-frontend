@@ -12,7 +12,6 @@ import Home from "./pages/Home.tsx";
 import BlogPost from "./pages/BlogPost.tsx";
 import AdminDashboard from "./pages/Dashboard.tsx";
 import AdminRoute from "./components/AdminRoute.tsx";
-// import Logout from "./components/Logout.tsx";
 import { persistor } from "./store/store";
 import { PersistGate } from "redux-persist/integration/react";
 
@@ -25,25 +24,20 @@ const router = createBrowserRouter([
       { path: "about", element: <App /> },
       {
         path: "/login",
-        element: <Login></Login>,
+        element: <Login />,
       },
       {
         path: "/register",
-        element: <Register></Register>,
+        element: <Register />,
       },
       {
         path: "/home",
-        element: <Home></Home>,
+        element: <Home />,
       },
       {
         path: "/post/:id",
-        element: <BlogPost></BlogPost>,
+        element: <BlogPost />,
       },
-      {
-        path: "/dashboard",
-        element: <AdminDashboard />,
-      },
-      // Protected admin routes
       {
         path: "/admin/dashboard",
         element: (
@@ -52,10 +46,6 @@ const router = createBrowserRouter([
           </AdminRoute>
         ),
       },
-      // {
-      //   path: "/logout",
-      //   element: <Logout />,
-      // },
     ],
   },
 ]);

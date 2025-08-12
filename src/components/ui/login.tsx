@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react"; // Import eye icons (you can use any icon library)
-
+import { Eye, EyeOff } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,11 +15,22 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-// Redux imports
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { useLoginMutation } from "../../features/auth/authApi";
 import { setCredentials } from "../../features/auth/authSlice";
+
+type DecodedToken = {
+  sub: string;
+  username: string;
+  role: string;
+  iat: number;
+};
+
+type AppUser = {
+  id: string;
+  username: string;
+  role: string;
+};
 
 const formSchema = z.object({
   username: z.string().min(3, {
@@ -30,28 +41,39 @@ const formSchema = z.object({
   }),
 });
 
+function isErrorWithData(
+  err: unknown
+): err is { data?: { message?: string }; message?: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    ("data" in err || "message" in err)
+  );
+}
+
 export default function LoginForm() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // RTK Query mutation hook
   const [login, { isLoading, error }] = useLoginMutation();
 
-  // Error state for display
   const [loginError, setLoginError] = useState<string>("");
 
-  // Password visibility state
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/home");
     }
   }, [isAuthenticated, navigate]);
 
-  // useForm with schema
+  useEffect(() => {
+    if (error) {
+      setLoginError("");
+    }
+  }, [error]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,31 +85,42 @@ export default function LoginForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoginError("");
-      console.log("Form data:", values);
-
-      // Call the login mutation
       const result = await login(values).unwrap();
+
+      const token = result.access_token;
+      if (!token) {
+        throw new Error(
+          `No valid token found. Available properties: ${Object.keys(
+            result
+          ).join(", ")}`
+        );
+      }
+
+      const decoded: DecodedToken = jwtDecode(token);
+
+      const appUser: AppUser = {
+        id: decoded.sub,
+        username: decoded.username,
+        role: decoded.role,
+      };
 
       dispatch(
         setCredentials({
-          user: result.user,
-          token: result.accessToken, // Renamed to match `authSlice`
+          user: appUser,
+          token: token,
         })
       );
-      // Reset form
+
       form.reset();
 
-      // Navigate based on user role
-      const isAdmin =
-        result.user.role === "admin" || result.user.isAdmin === true;
+      const isAdmin = appUser.role === "admin";
       navigate(isAdmin ? "/admin/dashboard" : "/home");
-    } catch (err: any) {
-      console.error("Login failed:", err);
-
-      // Handle different error types
-      if (err?.data?.message) {
-        setLoginError(err.data.message);
-      } else if (err?.message) {
+    } catch (err: unknown) {
+      if (isErrorWithData(err)) {
+        if (err.data?.message) setLoginError(err.data.message);
+        else if (err.message) setLoginError(err.message);
+        else setLoginError("Login failed. Please try again.");
+      } else if (err instanceof Error) {
         setLoginError(err.message);
       } else {
         setLoginError("Login failed. Please try again.");
@@ -99,23 +132,17 @@ export default function LoginForm() {
     <div className="border mt-10 md:w-[30%] w-[90%] rounded-md font-slab p-6">
       <h1 className="text-3xl font-bold font-slab text-center mb-6">Login</h1>
 
-      {/* Display login error if exists */}
-      {loginError && (
+      {(loginError || (error && "data" in error)) && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {loginError}
-        </div>
-      )}
-
-      {/* Display API error if exists */}
-      {error && "data" in error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {(error.data as any)?.message || "An error occurred"}
+          {loginError
+            ? loginError
+            : (error?.data as { message?: string })?.message ||
+              "An error occurred"}
         </div>
       )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Email */}
           <FormField
             control={form.control}
             name="username"
@@ -135,7 +162,6 @@ export default function LoginForm() {
             )}
           />
 
-          {/* Password */}
           <FormField
             control={form.control}
             name="password"
@@ -154,6 +180,7 @@ export default function LoginForm() {
                       type="button"
                       className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
                       onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
                     >
                       {showPassword ? (
                         <Eye className="h-5 w-5" />
@@ -178,7 +205,6 @@ export default function LoginForm() {
         </form>
       </Form>
 
-      {/* Register link */}
       <div className="text-center mt-4">
         <p className="text-sm text-gray-600">
           Don't have an account?{" "}
