@@ -1,8 +1,6 @@
-// src/features/auth/authApi.ts
 import { apiSlice } from "../api/apiSlice";
 
 interface LoginRequest {
-  // email: string;
   password: string;
   username: string;
 }
@@ -21,7 +19,7 @@ const authApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
-        url: "/auth/login",
+        url: "/login",
         method: "POST",
         body: credentials,
       }),
@@ -29,7 +27,7 @@ const authApi = apiSlice.injectEndpoints({
     }),
     register: builder.mutation<LoginResponse, RegisterRequest>({
       query: (userData) => ({
-        url: "/auth/register",
+        url: "/register",
         method: "POST",
         body: userData,
       }),

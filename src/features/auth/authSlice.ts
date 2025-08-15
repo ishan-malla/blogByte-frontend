@@ -3,8 +3,8 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   role?: string;
   isAdmin?: boolean;
 }

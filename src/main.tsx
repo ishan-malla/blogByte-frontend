@@ -38,6 +38,7 @@ const router = createBrowserRouter([
         path: "/post/:id",
         element: <BlogPost />,
       },
+
       {
         path: "/admin/dashboard",
         element: (

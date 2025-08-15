@@ -33,23 +33,13 @@ type AppUser = {
 };
 
 const formSchema = z.object({
-  username: z.string().min(3, {
-    message: "Username must be at least 3 characters.",
-  }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters." }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters." }),
 });
-
-function isErrorWithData(
-  err: unknown
-): err is { data?: { message?: string }; message?: string } {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    ("data" in err || "message" in err)
-  );
-}
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -57,9 +47,6 @@ export default function LoginForm() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [login, { isLoading, error }] = useLoginMutation();
-
-  const [loginError, setLoginError] = useState<string>("");
-
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -68,33 +55,27 @@ export default function LoginForm() {
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    if (error) {
-      setLoginError("");
-    }
-  }, [error]);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+    defaultValues: { username: "", password: "" },
   });
+
+  const getErrorMessage = (): string | null => {
+    if (error && "data" in error) {
+      return (
+        (error.data as { message?: string })?.message ||
+        "Login failed. Please try again."
+      );
+    }
+    return null;
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setLoginError("");
       const result = await login(values).unwrap();
 
       const token = result.access_token;
-      if (!token) {
-        throw new Error(
-          `No valid token found. Available properties: ${Object.keys(
-            result
-          ).join(", ")}`
-        );
-      }
+      if (!token) throw new Error("No valid token found");
 
       const decoded: DecodedToken = jwtDecode(token);
 
@@ -104,40 +85,27 @@ export default function LoginForm() {
         role: decoded.role,
       };
 
-      dispatch(
-        setCredentials({
-          user: appUser,
-          token: token,
-        })
-      );
-
-      form.reset();
+      console.log("appuser", appUser);
+      dispatch(setCredentials({ user: appUser, token }));
 
       const isAdmin = appUser.role === "admin";
+      console.log(isAdmin);
       navigate(isAdmin ? "/admin/dashboard" : "/home");
     } catch (err: unknown) {
-      if (isErrorWithData(err)) {
-        if (err.data?.message) setLoginError(err.data.message);
-        else if (err.message) setLoginError(err.message);
-        else setLoginError("Login failed. Please try again.");
-      } else if (err instanceof Error) {
-        setLoginError(err.message);
-      } else {
-        setLoginError("Login failed. Please try again.");
-      }
+      console.error("Login error:", err);
     }
+    form.reset();
   };
+
+  const errorMessage = getErrorMessage();
 
   return (
     <div className="border mt-10 md:w-[30%] w-[90%] rounded-md font-slab p-6">
       <h1 className="text-3xl font-bold font-slab text-center mb-6">Login</h1>
 
-      {(loginError || (error && "data" in error)) && (
+      {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {loginError
-            ? loginError
-            : (error?.data as { message?: string })?.message ||
-              "An error occurred"}
+          {errorMessage}
         </div>
       )}
 

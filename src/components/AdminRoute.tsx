@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "../hooks/redux";
 
 interface AdminRouteProps {
@@ -7,15 +7,24 @@ interface AdminRouteProps {
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   const isAdmin = user?.role === "admin" || user?.isAdmin === true;
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!isAdmin) {
+    return <Navigate to="/home" replace />;
   }
 
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  if (location.pathname === "/admin") {
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <>{children}</>;

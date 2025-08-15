@@ -1,10 +1,9 @@
-// RegisterForm.tsx
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +16,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { useRegisterMutation } from "../../features/auth/authApi";
+import {
+  useRegisterMutation,
+  useLoginMutation,
+} from "../../features/auth/authApi";
 import { setCredentials } from "../../features/auth/authSlice";
 
 const formSchema = z
   .object({
-    name: z.string().min(3, {
+    username: z.string().min(3, {
       message: "Username must be at least 3 characters.",
     }),
     email: z.string().email({
@@ -40,17 +42,36 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
+type RegisterFormData = z.infer<typeof formSchema>;
+
+function isErrorWithData(
+  err: unknown
+): err is { data?: { message?: string }; message?: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    ("data" in err || "message" in err)
+  );
+}
+
+type DecodedToken = {
+  sub: string;
+  username: string;
+  role: string;
+  iat: number;
+};
+
 export default function RegisterForm() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  const [register, { isLoading, error }] = useRegisterMutation();
+  const [register, { isLoading: isRegistering, error: registerErrorData }] =
+    useRegisterMutation();
+  const [login, { isLoading: isLoggingIn, error: loginErrorData }] =
+    useLoginMutation();
 
-  const [registerError, setRegisterError] = useState<string>("");
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formError, setFormError] = useState<string>("");
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -58,52 +79,82 @@ export default function RegisterForm() {
     }
   }, [isAuthenticated, navigate]);
 
-  // useForm with schema
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<RegisterFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      username: "",
       email: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: RegisterFormData) => {
     try {
-      setRegisterError("");
-      console.log("Form data:", values);
+      setFormError("");
 
-      const registerData = {
-        name: values.name,
+      // Use 'username' as backend expects it to be a string
+      await register({
+        username: values.username,
         email: values.email,
         password: values.password,
         role: "user",
-      };
+      } as any).unwrap(); // Type assertion to bypass TypeScript error
 
-      const result = await register(registerData).unwrap();
+      // Auto login right after register
+      const loginResult = await login({
+        username: values.username,
+        password: values.password,
+      }).unwrap();
 
-      dispatch(setCredentials(result));
+      const token = loginResult.access_token;
+      if (!token) {
+        throw new Error("Login did not return a valid access token.");
+      }
 
-      // Reset form
+      const decoded: DecodedToken = jwtDecode(token);
+
+      const appUser = {
+        id: decoded.sub,
+        name: decoded.username,
+        username: decoded.username,
+        email: values.email,
+        role: decoded.role,
+      } as any;
+
+      dispatch(
+        setCredentials({
+          user: appUser,
+          token: token,
+        })
+      );
+
       form.reset();
 
-      const user = result?.user;
-      const isAdmin = user && (user?.role === "admin" || user.isAdmin === true);
+      const isAdmin = appUser.role === "admin";
       navigate(isAdmin ? "/admin/dashboard" : "/home");
-    } catch (err: any) {
-      console.error("Registration failed:", err);
-
-      // Handle different error types
-      if (err?.data?.message) {
-        setRegisterError(err.data.message);
-      } else if (err?.message) {
-        setRegisterError(err.message);
+    } catch (err: unknown) {
+      if (isErrorWithData(err)) {
+        if (err.data?.message) setFormError(err.data.message);
+        else if (err.message) setFormError(err.message);
+        else setFormError("Registration failed. Please try again.");
+      } else if (err instanceof Error) {
+        setFormError(err.message);
       } else {
-        setRegisterError("Registration failed. Please try again.");
+        setFormError("Registration failed. Please try again.");
       }
     }
   };
+
+  const isLoading = isRegistering || isLoggingIn;
+  const combinedError =
+    formError ||
+    (registerErrorData && "data" in registerErrorData
+      ? (registerErrorData.data as { message?: string })?.message
+      : "") ||
+    (loginErrorData && "data" in loginErrorData
+      ? (loginErrorData.data as { message?: string })?.message
+      : "");
 
   return (
     <div className="border mt-10 md:w-[30%] w-[90%] rounded-md font-slab p-6">
@@ -111,23 +162,21 @@ export default function RegisterForm() {
         Register
       </h1>
 
-      {/* Display register error if exists */}
-      {registerError ? (
+      {combinedError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {registerError}
+          {combinedError}
         </div>
-      ) : error && "data" in error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {(error.data as any)?.message || "An error occurred"}
-        </div>
-      ) : null}
+      )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Username */}
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6"
+          noValidate
+        >
           <FormField
             control={form.control}
-            name="name"
+            name="username"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Username</FormLabel>
@@ -135,7 +184,7 @@ export default function RegisterForm() {
                   <Input
                     type="text"
                     placeholder="Enter your username"
-                    autoComplete="name"
+                    autoComplete="username"
                     {...field}
                     disabled={isLoading}
                   />
@@ -145,7 +194,6 @@ export default function RegisterForm() {
             )}
           />
 
-          {/* Email */}
           <FormField
             control={form.control}
             name="email"
@@ -166,7 +214,6 @@ export default function RegisterForm() {
             )}
           />
 
-          {/* Password */}
           <FormField
             control={form.control}
             name="password"
@@ -174,33 +221,19 @@ export default function RegisterForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      autoComplete="new-password"
-                      {...field}
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    autoComplete="new-password"
+                    {...field}
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Confirm Password */}
           <FormField
             control={form.control}
             name="confirmPassword"
@@ -208,28 +241,13 @@ export default function RegisterForm() {
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      autoComplete="new-password"
-                      {...field}
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
+                  <Input
+                    type="password"
+                    placeholder="Confirm your password"
+                    autoComplete="new-password"
+                    {...field}
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -246,13 +264,13 @@ export default function RegisterForm() {
         </form>
       </Form>
 
-      {/* Login link */}
       <div className="text-center mt-4">
         <p className="text-sm text-gray-600">
           Already have an account?{" "}
           <button
             onClick={() => navigate("/login")}
             className="text-blue-600 hover:underline font-medium"
+            type="button"
           >
             Login here
           </button>

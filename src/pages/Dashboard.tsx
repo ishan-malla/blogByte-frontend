@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useCreatePostMutation } from "../features/postApi";
+import Dropzone from "react-dropzone";
 import {
   Card,
   CardContent,
@@ -11,30 +14,28 @@ import {
 import { Button } from "../components/ui/button";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Plus, Image as ImageIcon } from "lucide-react";
-import { Textarea } from "../components/ui/textarea";
+import { Textarea } from "../components/textarea";
 import { Label } from "../components/ui/label";
-import Dropzone from "react-dropzone";
 
-interface PostFormData {
-  title: string;
-  content: string;
-  image: File | null;
-  snippet: string;
-}
+// 1️⃣ Zod schema
+const postSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  content: z.string().min(1, "Content is required"),
+  image: z
+    .instanceof(File)
+    .optional()
+    .refine((file) => !file || file.size <= 5_000_000, "File must be ≤ 5MB"),
+});
 
-const user = {
-  id: "1",
-  name: "Admin User",
-  role: "admin",
-};
+// 2️⃣ Type inferred from schema
+type PostFormData = z.infer<typeof postSchema>;
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
-  const [posts, setPosts] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingPostTitle, setEditingPostTitle] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
   const [preview, setPreview] = useState<string>("");
+  const [message, setMessage] = useState("");
+
+  const [createPost, { isLoading }] = useCreatePostMutation();
 
   const {
     control,
@@ -43,24 +44,13 @@ export default function DashboardPage() {
     setValue,
     formState: { errors },
   } = useForm<PostFormData>({
+    resolver: zodResolver(postSchema),
     defaultValues: {
       title: "",
       content: "",
-      image: null,
-      snippet: "",
+      image: undefined,
     },
   });
-
-  useEffect(() => {
-    if (user && user.role !== "admin") {
-      navigate("/");
-      return;
-    }
-  }, [navigate]);
-
-  if (!user || user.role !== "admin") {
-    return null;
-  }
 
   const resizeImage = (file: File, maxWidth = 600): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -78,13 +68,10 @@ export default function DashboardPage() {
         if (!ctx) return reject(new Error("Canvas not supported"));
 
         const scale = maxWidth / img.width;
-        const newWidth = maxWidth;
-        const newHeight = img.height * scale;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
 
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-
-        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         canvas.toBlob((blob) => {
           if (!blob) return reject(new Error("Image compression failed"));
@@ -96,37 +83,6 @@ export default function DashboardPage() {
     });
   };
 
-  const onSubmit = (data: PostFormData) => {
-    console.log("Ready to send:", data);
-
-    setMessage(
-      editingPostTitle
-        ? "Post updated (pending upload)"
-        : "Post created (pending upload)"
-    );
-
-    reset();
-    setPreview("");
-    setIsCreating(false);
-    setEditingPostTitle(null);
-  };
-
-  const handleEdit = (post: any) => {
-    setEditingPostTitle(post.title);
-    setIsCreating(true);
-    setValue("title", post.title);
-    setValue("content", post.content);
-    setValue("snippet", post.snippet || "");
-    setPreview(post.imagePreview || "");
-  };
-
-  const cancelForm = () => {
-    setIsCreating(false);
-    setEditingPostTitle(null);
-    reset();
-    setPreview("");
-  };
-
   const handleImageUpload = async (file: File) => {
     try {
       const resizedFile = await resizeImage(file);
@@ -134,6 +90,30 @@ export default function DashboardPage() {
       setPreview(URL.createObjectURL(resizedFile));
     } catch (err) {
       console.error("Error resizing image:", err);
+    }
+  };
+
+  const cancelForm = () => {
+    reset();
+    setPreview("");
+    setIsCreating(false);
+  };
+
+  const onSubmit = async (data: PostFormData) => {
+    try {
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("content", data.content);
+      if (data.image) formData.append("image", data.image);
+
+      const result = await createPost(formData).unwrap();
+      setMessage(`Post "${result.title}" created successfully!`);
+      reset();
+      setPreview("");
+      setIsCreating(false);
+    } catch (err) {
+      console.error("Failed to create post:", err);
+      setMessage("Failed to create post");
     }
   };
 
@@ -166,13 +146,9 @@ export default function DashboardPage() {
           {isCreating && (
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {editingPostTitle ? "Edit Post" : "Create New Post"}
-                </CardTitle>
+                <CardTitle>Create New Post</CardTitle>
                 <CardDescription>
-                  {editingPostTitle
-                    ? "Update your blog post"
-                    : "Write a new blog post for your readers"}
+                  Write a new blog post for your readers
                 </CardDescription>
               </CardHeader>
 
@@ -184,11 +160,17 @@ export default function DashboardPage() {
                       name="title"
                       control={control}
                       render={({ field }) => (
-                        <input
-                          {...field}
-                          className="border rounded px-3 py-2 w-full"
-                          required
-                        />
+                        <>
+                          <input
+                            {...field}
+                            className="border rounded px-3 py-2 w-full"
+                          />
+                          {errors.title && (
+                            <p className="text-red-500">
+                              {errors.title.message}
+                            </p>
+                          )}
+                        </>
                       )}
                     />
                   </div>
@@ -199,7 +181,14 @@ export default function DashboardPage() {
                       name="content"
                       control={control}
                       render={({ field }) => (
-                        <Textarea {...field} rows={6} required />
+                        <>
+                          <Textarea {...field} rows={6} />
+                          {errors.content && (
+                            <p className="text-red-500">
+                              {errors.content.message}
+                            </p>
+                          )}
+                        </>
                       )}
                     />
                   </div>
@@ -208,9 +197,8 @@ export default function DashboardPage() {
                     <Label>Upload Image</Label>
                     <Dropzone
                       onDrop={(acceptedFiles) => {
-                        if (acceptedFiles[0]) {
+                        if (acceptedFiles[0])
                           handleImageUpload(acceptedFiles[0]);
-                        }
                       }}
                       accept={{ "image/*": [] }}
                       maxFiles={1}
@@ -235,15 +223,6 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  <div>
-                    <Label htmlFor="snippet">Snippet</Label>
-                    <Controller
-                      name="snippet"
-                      control={control}
-                      render={({ field }) => <Textarea {...field} rows={3} />}
-                    />
-                  </div>
-
                   <div className="flex justify-end space-x-4">
                     <Button
                       type="button"
@@ -252,8 +231,8 @@ export default function DashboardPage() {
                     >
                       Cancel
                     </Button>
-                    <Button type="submit">
-                      {editingPostTitle ? "Update Post" : "Create Post"}
+                    <Button type="submit" disabled={isLoading}>
+                      Create Post
                     </Button>
                   </div>
                 </form>
