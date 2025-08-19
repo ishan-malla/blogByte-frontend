@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { unknown, z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
@@ -61,7 +61,7 @@ export default function LoginForm() {
   });
 
   const getErrorMessage = (): string | null => {
-    if (error && "data" in error) {
+    if (error) {
       return (
         (error.data as { message?: string })?.message ||
         "Login failed. Please try again."

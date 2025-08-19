@@ -30,6 +30,10 @@ export const postApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Post"],
     }),
+    getPosts: builder.query<PostResponse[], void>({
+      query: () => "/posts",
+      providesTags: ["Post"],
+    }),
   }),
 });
 
