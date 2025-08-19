@@ -7,9 +7,9 @@ import type {
 import type { RootState } from "../../store/store";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "http://localhost:3000/",
+  baseUrl: import.meta.env.VITE_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as RootState).auth?.token;
+    const token = (getState() as RootState).auth.token;
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }

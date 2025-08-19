@@ -34,7 +34,13 @@ export const postApi = apiSlice.injectEndpoints({
       query: () => "/posts",
       providesTags: ["Post"],
     }),
+
+    getPostById: builder.query<PostResponse, string>({
+      query: (id) => `/posts/${id}`,
+      providesTags: ["Post"],
+    }),
   }),
 });
 
-export const { useCreatePostMutation, useGetPostsQuery } = postApi;
+export const { useCreatePostMutation, useGetPostsQuery, useGetPostByIdQuery } =
+  postApi;

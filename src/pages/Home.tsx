@@ -13,19 +13,19 @@ export default function Home() {
       <div className="text-center mt-10 text-red-500">Failed to load posts</div>
     );
   }
-  console.log(posts);
 
   return (
     <div className="w-full min-h-screen bg-gray-100 flex justify-center">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6 sm:w-3/4">
-        {posts?.map((blog) => (
-          <div key={blog._id} className="aspect-square">
+        {posts?.map((post) => (
+          <div key={post._id} className="aspect-square">
             <SpotlightCard
-              id={blog._id}
-              title={blog.title}
-              img={blog.image}
-              rating={blog.ratings}
-              comments={blog.commentCount}
+              id={post._id}
+              title={post.title}
+              img={post.image}
+              rating={4.5}
+              comments={post.comments.length}
+              author={post.author?.username || "Anonymous"}
             />
           </div>
         ))}
