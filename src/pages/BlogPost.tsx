@@ -1,7 +1,10 @@
 import CommentSection from "@/components/CommentSection";
+import { useParams } from "react-router-dom";
 const BlogPost = () => {
-  const rating = 4; // Out of 5
+  const rating = 4;
 
+  const { id } = useParams();
+  console.log(id);
   return (
     <article className="flex flex-col items-center px-4 md:px-0">
       <header className="flex flex-col gap-2 w-full  md:w-1/2">

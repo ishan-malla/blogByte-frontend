@@ -2,7 +2,7 @@ import { MessageSquare, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type SpotlightCardProps = {
-  id: number;
+  id: string;
   title: string;
   img: string;
   rating: number;
@@ -16,6 +16,7 @@ const SpotlightCard = ({
   rating,
   comments,
 }: SpotlightCardProps) => {
+  console.log(img);
   return (
     <Link to={`/post/${id}`}>
       <div className="w-full border rounded-md shadow-sm overflow-hidden flex flex-col gap-3">

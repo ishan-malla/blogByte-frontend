@@ -37,4 +37,4 @@ export const postApi = apiSlice.injectEndpoints({
   }),
 });
 
-export const { useCreatePostMutation } = postApi;
+export const { useCreatePostMutation, useGetPostsQuery } = postApi;

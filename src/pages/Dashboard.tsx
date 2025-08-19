@@ -17,7 +17,6 @@ import { Plus, Image as ImageIcon } from "lucide-react";
 import { Textarea } from "../components/textarea";
 import { Label } from "../components/ui/label";
 
-// 1️⃣ Zod schema
 const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
@@ -27,7 +26,6 @@ const postSchema = z.object({
     .refine((file) => !file || file.size <= 5_000_000, "File must be ≤ 5MB"),
 });
 
-// 2️⃣ Type inferred from schema
 type PostFormData = z.infer<typeof postSchema>;
 
 export default function DashboardPage() {
