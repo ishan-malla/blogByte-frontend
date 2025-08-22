@@ -22,6 +22,7 @@ export default function Home() {
             <SpotlightCard
               id={post._id}
               title={post.title}
+              snippet={post.snippet}
               img={post.image}
               rating={4.5}
               comments={post.comments.length}

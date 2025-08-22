@@ -1,25 +1,55 @@
-import { Button } from "./ui/button";
+// CommentForm.tsx
+import { useForm } from "react-hook-form";
+import { Button } from "../components/ui/button";
+import { Textarea } from "../components/ui/textarea";
 
-const CommentForm = () => {
+interface CommentFormProps {
+  onAdd: (text: string) => void;
+  username: string;
+}
+
+const CommentForm = ({ onAdd, username }: CommentFormProps) => {
+  const { register, handleSubmit, reset } = useForm<{ text: string }>();
+
+  const submit = (data: { text: string }) => {
+    if (!data.text.trim()) return;
+    onAdd(data.text);
+    reset();
+  };
+
   return (
-    <div className="flex gap-3 mb-6">
+    <form
+      onSubmit={handleSubmit(submit)}
+      className="flex gap-3 mb-6 items-start"
+    >
       <div className="flex-shrink-0">
         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-700">
-          U
+          {username[0]?.toUpperCase() || "U"}
         </div>
       </div>
 
       <div className="flex-1">
-        <textarea
+        <Textarea
+          {...register("text")}
           placeholder="Add a public comment..."
-          className="w-full border-b border-gray-300 focus:border-gray-500 outline-none resize-none min-h-[40px] p-1 text-sm"
-        ></textarea>
+          className="min-h-[40px] resize-none"
+        />
         <div className="mt-2 flex justify-end gap-2">
-          <Button className="px-3 py-1 text-sm rounded ">Cancel</Button>
-          <Button>Comment</Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => reset()}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" size="sm">
+            Comment
+          </Button>
         </div>
       </div>
-    </div>
+    </form>
   );
 };
+
 export default CommentForm;

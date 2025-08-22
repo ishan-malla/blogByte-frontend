@@ -19,6 +19,10 @@ import { Label } from "../components/ui/label";
 
 const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
+  snippet: z
+    .string()
+    .min(1, "Snippet is required")
+    .max(200, "Snippet must be less than 200 characters"),
   content: z.string().min(1, "Content is required"),
   image: z
     .instanceof(File)
@@ -45,6 +49,7 @@ export default function DashboardPage() {
     resolver: zodResolver(postSchema),
     defaultValues: {
       title: "",
+      snippet: "",
       content: "",
       image: undefined,
     },
@@ -101,6 +106,7 @@ export default function DashboardPage() {
     try {
       const formData = new FormData();
       formData.append("title", data.title);
+      formData.append("snippet", data.snippet);
       formData.append("content", data.content);
       if (data.image) formData.append("image", data.image);
 
@@ -152,6 +158,7 @@ export default function DashboardPage() {
 
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Title */}
                   <div>
                     <Label htmlFor="title">Title</Label>
                     <Controller
@@ -173,6 +180,30 @@ export default function DashboardPage() {
                     />
                   </div>
 
+                  {/* Snippet */}
+                  <div>
+                    <Label htmlFor="snippet">Snippet</Label>
+                    <Controller
+                      name="snippet"
+                      control={control}
+                      render={({ field }) => (
+                        <>
+                          <Textarea
+                            {...field}
+                            rows={3}
+                            placeholder="Write a short summary (max 200 characters)"
+                          />
+                          {errors.snippet && (
+                            <p className="text-red-500">
+                              {errors.snippet.message}
+                            </p>
+                          )}
+                        </>
+                      )}
+                    />
+                  </div>
+
+                  {/* Content */}
                   <div>
                     <Label htmlFor="content">Content</Label>
                     <Controller
@@ -191,6 +222,7 @@ export default function DashboardPage() {
                     />
                   </div>
 
+                  {/* Image Upload */}
                   <div>
                     <Label>Upload Image</Label>
                     <Dropzone
@@ -221,6 +253,7 @@ export default function DashboardPage() {
                     )}
                   </div>
 
+                  {/* Actions */}
                   <div className="flex justify-end space-x-4">
                     <Button
                       type="button"
