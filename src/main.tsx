@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { store } from "./store/store.tsx";
+import { store } from "./sections/store/store.tsx";
 import { Provider } from "react-redux";
 import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
@@ -12,7 +12,7 @@ import Home from "./pages/Home.tsx";
 import BlogPost from "./pages/BlogPost.tsx";
 import AdminDashboard from "./pages/Dashboard.tsx";
 import AdminRoute from "./components/AdminRoute.tsx";
-import { persistor } from "./store/store";
+import { persistor } from "./sections/store/store.tsx";
 import { PersistGate } from "redux-persist/integration/react";
 
 const router = createBrowserRouter([

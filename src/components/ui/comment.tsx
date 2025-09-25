@@ -38,7 +38,7 @@ const Comment = ({
       {/* Avatar */}
       <div className="flex-shrink-0">
         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-700">
-          {/* {username[0].toUpperCase()} */}
+          {username[0].toUpperCase()}
         </div>
       </div>
 

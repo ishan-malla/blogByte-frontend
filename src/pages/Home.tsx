@@ -24,7 +24,7 @@ export default function Home() {
               title={post.title}
               snippet={post.snippet}
               img={post.image}
-              rating={4.5}
+              rating={0}
               comments={post.comments.length}
               author={post.author?.username || "Anonymous"}
             />

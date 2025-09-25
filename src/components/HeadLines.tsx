@@ -1,17 +1,10 @@
 import { Link } from "react-router-dom";
 import Headline from "./ui/Headline";
+import { useGetPostsQuery } from "@/features/postApi";
 
-const headlines = [
-  "Elon Musk Announces New Language: Tweetish, to Replace English on X",
-  "YouTube Now Auto-Skips to the Comment Section, Viewers Celebrate",
-  "New AI CEO Hired by Mistake, Company Profits Triple in First Week",
-  "Instagram Adds 'Overthink Filter' for People Who Reread Texts 5 Times",
-  "Microsoft Word Finally Adds Button That Just Finishes the Essay for You",
-  "Google Maps Introduces 'Emotional Route' Avoids Places with Bad Memories",
-  "TikTok Users Can Now Upload Thoughts Directly from Brain in Beta Test",
-  "Spotify Wrapped Now Includes 'Breakup Songs You Lied About Not Crying To'",
-];
 const HeadLines = () => {
+  const { data: posts = [] } = useGetPostsQuery();
+
   return (
     <div className="w-full ">
       <div className="flex w-full text-sm font-medium justify-between">
@@ -20,10 +13,10 @@ const HeadLines = () => {
           See all
         </Link>
       </div>
-      {headlines.map((headline, index) => {
+      {posts.map((post, index) => {
         return (
           <div className="flex flex-col w-full  " key={index}>
-            <Headline headline={headline}></Headline>
+            <Headline headline={post.title}></Headline>
           </div>
         );
       })}

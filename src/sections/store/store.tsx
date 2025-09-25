@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
-import { apiSlice } from "../features/api/apiSlice";
-import authReducer from "../features/auth/authSlice";
+import { apiSlice } from "../../features/api/apiSlice";
+import authReducer from "../../features/auth/authSlice";
 
 const persistConfig = {
   key: "auth",

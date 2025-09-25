@@ -5,8 +5,8 @@ type SpotlightCardProps = {
   id: string;
   title: string;
   snippet: string;
-  img: string;
-  rating: number;
+  img?: string;
+  ratings: number[];
   comments: number;
   author: string;
 };
@@ -16,30 +16,28 @@ const SpotlightCard = ({
   title,
   snippet,
   img,
-  rating,
+  ratings,
   comments,
   author,
 }: SpotlightCardProps) => {
-  console.log(snippet);
   return (
     <Link to={`/post/${id}`}>
-      <div className="w-full border rounded-md shadow-sm overflow-hidden flex flex-col gap-3 hover:shadow-md transition-shadow duration-200">
-        {/* Post Image */}
-        <img src={img} alt={title} className="w-full h-52 object-cover" />
+      <div className="w-full border rounded-md shadow-sm overflow-hidden flex flex-col gap-3 hover:shadow-md transition-shadow duration-200   ">
+        <img
+          src={img || "/placeholder.jpg"}
+          alt={title}
+          className="w-full h-52 object-cover min-w-94"
+        />
 
         <div className="px-4 pb-4 space-y-2">
-          {/* Title */}
           <h2 className="text-lg font-domine font-semibold line-clamp-2">
             {title}
           </h2>
 
-          {/* Snippet */}
           <p className="text-sm text-gray-700 line-clamp-3">{snippet}</p>
 
-          {/* Author */}
           <p className="text-xs text-gray-500">by {author}</p>
 
-          {/* Rating + Comments */}
           <div className="flex justify-end text-xs space-x-4">
             <div className="flex items-center space-x-1">
               <Star
@@ -48,7 +46,7 @@ const SpotlightCard = ({
                 absoluteStrokeWidth
                 strokeWidth={1.3}
               />
-              <span>{rating}</span>
+              <span>{ratings}</span>
             </div>
 
             <div className="flex items-center space-x-1">

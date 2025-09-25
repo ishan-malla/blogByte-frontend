@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCreatePostMutation } from "../features/postApi";
+import { useCreatePostMutation, useGetPostsQuery } from "../features/postApi";
 import Dropzone from "react-dropzone";
 import {
   Card,
@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 import { Plus, Image as ImageIcon } from "lucide-react";
 import { Textarea } from "../components/textarea";
 import { Label } from "../components/ui/label";
+import PostItem from "../components/ui/PostItem";
 
 const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [message, setMessage] = useState("");
 
   const [createPost, { isLoading }] = useCreatePostMutation();
+  const { data: posts, isFetching, refetch } = useGetPostsQuery();
 
   const {
     control,
@@ -115,6 +117,7 @@ export default function DashboardPage() {
       reset();
       setPreview("");
       setIsCreating(false);
+      refetch(); // refresh list
     } catch (err) {
       console.error("Failed to create post:", err);
       setMessage("Failed to create post");
@@ -123,153 +126,161 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="space-y-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Admin Dashboard
-              </h1>
-              <p className="text-gray-600 mt-2">Manage your blog posts</p>
-            </div>
-
-            {!isCreating && (
-              <Button onClick={() => setIsCreating(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Post
-              </Button>
-            )}
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-600 mt-2">Manage your blog posts</p>
           </div>
-
-          {message && (
-            <Alert>
-              <AlertDescription>{message}</AlertDescription>
-            </Alert>
+          {!isCreating && (
+            <Button onClick={() => setIsCreating(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create New Post
+            </Button>
           )}
+        </div>
 
-          {isCreating && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Create New Post</CardTitle>
-                <CardDescription>
-                  Write a new blog post for your readers
-                </CardDescription>
-              </CardHeader>
+        {/* Message */}
+        {message && (
+          <Alert>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
 
-              <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Title */}
-                  <div>
-                    <Label htmlFor="title">Title</Label>
-                    <Controller
-                      name="title"
-                      control={control}
-                      render={({ field }) => (
-                        <>
-                          <input
-                            {...field}
-                            className="border rounded px-3 py-2 w-full"
-                          />
-                          {errors.title && (
-                            <p className="text-red-500">
-                              {errors.title.message}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    />
-                  </div>
+        {/* Create Form */}
+        {isCreating && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Create New Post</CardTitle>
+              <CardDescription>
+                Write a new blog post for your readers
+              </CardDescription>
+            </CardHeader>
 
-                  {/* Snippet */}
-                  <div>
-                    <Label htmlFor="snippet">Snippet</Label>
-                    <Controller
-                      name="snippet"
-                      control={control}
-                      render={({ field }) => (
-                        <>
-                          <Textarea
-                            {...field}
-                            rows={3}
-                            placeholder="Write a short summary (max 200 characters)"
-                          />
-                          {errors.snippet && (
-                            <p className="text-red-500">
-                              {errors.snippet.message}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div>
-                    <Label htmlFor="content">Content</Label>
-                    <Controller
-                      name="content"
-                      control={control}
-                      render={({ field }) => (
-                        <>
-                          <Textarea {...field} rows={6} />
-                          {errors.content && (
-                            <p className="text-red-500">
-                              {errors.content.message}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    />
-                  </div>
-
-                  {/* Image Upload */}
-                  <div>
-                    <Label>Upload Image</Label>
-                    <Dropzone
-                      onDrop={(acceptedFiles) => {
-                        if (acceptedFiles[0])
-                          handleImageUpload(acceptedFiles[0]);
-                      }}
-                      accept={{ "image/*": [] }}
-                      maxFiles={1}
-                    >
-                      {({ getRootProps, getInputProps }) => (
-                        <div
-                          {...getRootProps()}
-                          className="border-2 border-dashed p-4 text-center cursor-pointer"
-                        >
-                          <input {...getInputProps()} />
-                          <ImageIcon className="mx-auto mb-2" />
-                          <p>Drag & drop or click to upload image</p>
-                        </div>
-                      )}
-                    </Dropzone>
-                    {preview && (
-                      <img
-                        src={preview}
-                        alt="Preview"
-                        className="mt-4 max-h-48 object-cover rounded"
-                      />
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Title */}
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Controller
+                    name="title"
+                    control={control}
+                    render={({ field }) => (
+                      <>
+                        <input
+                          {...field}
+                          className="border rounded px-3 py-2 w-full"
+                        />
+                        {errors.title && (
+                          <p className="text-red-500">{errors.title.message}</p>
+                        )}
+                      </>
                     )}
-                  </div>
+                  />
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex justify-end space-x-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={cancelForm}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isLoading}>
-                      Create Post
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+                {/* Snippet */}
+                <div>
+                  <Label htmlFor="snippet">Snippet</Label>
+                  <Controller
+                    name="snippet"
+                    control={control}
+                    render={({ field }) => (
+                      <>
+                        <Textarea {...field} rows={3} />
+                        {errors.snippet && (
+                          <p className="text-red-500">
+                            {errors.snippet.message}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <Label htmlFor="content">Content</Label>
+                  <Controller
+                    name="content"
+                    control={control}
+                    render={({ field }) => (
+                      <>
+                        <Textarea {...field} rows={6} />
+                        {errors.content && (
+                          <p className="text-red-500">
+                            {errors.content.message}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                  <Label>Upload Image</Label>
+                  <Dropzone
+                    onDrop={(acceptedFiles) => {
+                      if (acceptedFiles[0]) handleImageUpload(acceptedFiles[0]);
+                    }}
+                    accept={{ "image/*": [] }}
+                    maxFiles={1}
+                  >
+                    {({ getRootProps, getInputProps }) => (
+                      <div
+                        {...getRootProps()}
+                        className="border-2 border-dashed p-4 text-center cursor-pointer"
+                      >
+                        <input {...getInputProps()} />
+                        <ImageIcon className="mx-auto mb-2" />
+                        <p>Drag & drop or click to upload image</p>
+                      </div>
+                    )}
+                  </Dropzone>
+                  {preview && (
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="mt-4 max-h-48 object-cover rounded"
+                    />
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end space-x-4">
+                  <Button type="button" variant="outline" onClick={cancelForm}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Creating..." : "Create Post"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Posts List */}
+        <div className="space-y-6">
+          {isFetching && <p>Loading posts...</p>}
+          {posts?.map((post) => (
+            <PostItem
+              key={post._id}
+              post={post}
+              onPostUpdated={(msg) => {
+                setMessage(msg);
+                refetch();
+              }}
+              onPostDeleted={(msg) => {
+                setMessage(msg);
+                refetch();
+              }}
+            />
+          ))}
         </div>
       </main>
     </div>
